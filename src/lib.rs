@@ -1,12 +1,17 @@
+#![warn(missing_docs)]
+//! This crate will provide fundemantal functions to implement a basic game of life
 #[derive(Debug, PartialEq, Eq)]
+/// This stucture will hold a basic gamestate
 pub struct GoLField {
     field_data: std::vec::Vec<u8>,
     width: u32,
     height: u32,
 }
-
+/// This Enum describes how the edge of the field will be interpreted
 pub enum EdgeBehavior {
+    /// Using this behavior calc_next_iter will reach around the board to read the neightbour cells
     Wrapping,
+    /// Using this behavior the cells outside the board will be treated as dead cells
     DeadCells,
 }
 
@@ -26,6 +31,7 @@ impl GoLField {
         let mut count: u8 = 0;
         match eb {
             EdgeBehavior::Wrapping => {
+                unimplemented!();
                 for h in -1..2 {
                     for w in -1..2 {
                         if w == 0 && h == 0 {
@@ -72,6 +78,7 @@ impl GoLField {
         }
         count
     }
+    /// calculates and returns the next iteration of the board
     pub fn calc_next_iteration(&self, eb: EdgeBehavior) -> GoLField {
         let mut ret = GoLField::new(self.width, self.height);
         for h in 0..self.height {
@@ -109,6 +116,7 @@ impl GoLField {
         assert!(bit_to_shift < 8);
         (byte_no, bit_to_shift)
     }
+    /// creates a new gameboard with the given width and height
     pub fn new(width: u32, height: u32) -> GoLField {
         let needed_bytes = (width * height) as f32 / 8_f32;
         let needed_bytes = needed_bytes.ceil();
@@ -120,17 +128,26 @@ impl GoLField {
             height,
         }
     }
+
+    /// Gets the state of a given cell
+    /// ```true``` if the cell is alive
+    ///
+    /// ```false``` if the cell is dead
     pub fn get_cell(&self, width: u32, height: u32) -> bool {
         let bit_stuff = self.get_relbyte_and_bits_to_shift(width, height);
         let relevant_byte = self.field_data[bit_stuff.0];
 
         relevant_byte & (0x01 << bit_stuff.1) != 0x00
     }
+
+    /// Sets the state of a given cell to alive
     pub fn set_cell_alive(&mut self, width: u32, height: u32) {
         let bit_stuff = self.get_relbyte_and_bits_to_shift(width, height);
 
         if let Some(relevant_byte) = self.field_data.get_mut(bit_stuff.0) {
             *relevant_byte |= 0x1 << bit_stuff.1;
+        } else {
+            unreachable!()
         }
     }
 }
