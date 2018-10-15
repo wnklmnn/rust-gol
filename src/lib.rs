@@ -1,4 +1,4 @@
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 //! This crate will provide fundemantal functions to implement a basic game of life
 #[derive(Debug, PartialEq, Eq)]
 /// This stucture will hold a basic gamestate
@@ -7,6 +7,16 @@ pub struct GoLField {
     width: u32,
     height: u32,
 }
+
+#[derive(PartialEq, Eq)]
+/// Represents the state of a cell
+pub enum CellState {
+    /// The cell is alive
+    Alive,
+    /// The cell is dead
+    Dead,
+}
+
 /// This Enum describes how the edge of the field will be interpreted
 pub enum EdgeBehavior {
     /// Using this behavior calc_next_iter will reach around the board to read the neightbour cells
@@ -41,7 +51,9 @@ impl GoLField {
                         let target_width = width + w; // Diese Zeile muss noch angepassst werden
                         let target_height = height + h; // Diese Zeile muss noch angepassst werden
 
-                        if self.get_cell(target_width as u32, target_height as u32) == true {
+                        if self.get_cell(target_width as u32, target_height as u32)
+                            == CellState::Alive
+                        {
                             count += 1;
                         }
                     }
@@ -69,7 +81,9 @@ impl GoLField {
                         if target_height < 0 || target_height >= i64::from(self.height) {
                             continue;
                         }
-                        if self.get_cell(target_width as u32, target_height as u32) == true {
+                        if self.get_cell(target_width as u32, target_height as u32)
+                            == CellState::Alive
+                        {
                             count += 1;
                         }
                     }
@@ -84,13 +98,12 @@ impl GoLField {
         for h in 0..self.height {
             for w in 0..self.width {
                 let al_neigthbours = self.get_alive_neightbour_count(w, h, &eb);
-                println!("al_neightbours({}, {}) = {}", w, h, al_neigthbours);
                 match al_neigthbours {
                     0...1 => {
                         //Zelle wird nicht belebt
                     }
                     2 => {
-                        if self.get_cell(w, h) {
+                        if self.get_cell(w, h) == CellState::Alive {
                             ret.set_cell_alive(w, h);
                         }
                     }
@@ -107,18 +120,19 @@ impl GoLField {
         ret
     }
 
-    fn get_relbyte_and_bits_to_shift(&self, width: u32, height: u32) -> (usize, u32) {
+    fn get_relbyte_and_bits_to_shift(&self, width: u32, height: u32) -> (usize, u8) {
         assert!(width < self.width);
-        let bit = (self.width * height) + width;
-        let byte_no = (bit as f32 / 8_f32).floor() as usize;
+        let bit: u64 = (self.width as u64 * height as u64) + width as u64;
+        let byte_no = (bit as f64 / 8_f64) as usize;
         assert!(byte_no < self.field_data.len());
-        let bit_to_shift = 7 - (bit % 8);
+        let bit_to_shift: u8 = 7 - (bit % 8) as u8;
         assert!(bit_to_shift < 8);
         (byte_no, bit_to_shift)
     }
     /// creates a new gameboard with the given width and height
     pub fn new(width: u32, height: u32) -> GoLField {
-        let needed_bytes = (width * height) as f32 / 8_f32;
+        let needed_bytes = (width as u64 * height as u64) as f64 / 8_f64;
+        eprintln!("bytes needed = {}", needed_bytes);
         let needed_bytes = needed_bytes.ceil();
         let field = vec![0_u8; needed_bytes as usize];
 
@@ -130,14 +144,14 @@ impl GoLField {
     }
 
     /// Gets the state of a given cell
-    /// ```true``` if the cell is alive
-    ///
-    /// ```false``` if the cell is dead
-    pub fn get_cell(&self, width: u32, height: u32) -> bool {
+    pub fn get_cell(&self, width: u32, height: u32) -> CellState {
         let bit_stuff = self.get_relbyte_and_bits_to_shift(width, height);
         let relevant_byte = self.field_data[bit_stuff.0];
 
-        relevant_byte & (0x01 << bit_stuff.1) != 0x00
+        match relevant_byte & (0x01 << bit_stuff.1) != 0x00 {
+            true => CellState::Alive,
+            false => CellState::Dead,
+        }
     }
 
     /// Sets the state of a given cell to alive
