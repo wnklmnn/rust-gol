@@ -4,8 +4,6 @@ pub struct GoLField {
     width: u32,
 }
 
-
-
 impl GoLField {
     /*1,1 = erstes byte, fünftes bit
         0, 0, 0,
@@ -15,7 +13,7 @@ impl GoLField {
         00001000 00000000  
 
          */
-    fn get_relbyte_and_bits_to_shift(&self, width: u32, height: u32) ->  (usize, u32) {
+    fn get_relbyte_and_bits_to_shift(&self, width: u32, height: u32) -> (usize, u32) {
         assert!(width < self.width);
         let bit = (self.width * height) + width;
         let byte_no = (bit as f32 / 8_f32).floor() as usize;
