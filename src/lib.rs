@@ -34,6 +34,14 @@ impl GoLField {
         0000_1000 0000_0000  
 
          */
+    /// Returns the height of the board
+    pub fn get_height(&self) -> u32 {
+        self.height
+    }
+    /// Returns the width of the board
+    pub fn get_width(&self) -> u32 {
+        self.width
+    }
 
     fn get_alive_neightbour_count(&self, width: u32, height: u32, eb: &EdgeBehavior) -> u8 {
         let width: i64 = i64::from(width);
@@ -41,26 +49,46 @@ impl GoLField {
         let mut count: u8 = 0;
         match eb {
             EdgeBehavior::Wrapping => {
-                unimplemented!();
                 for h in -1..2 {
                     for w in -1..2 {
                         if w == 0 && h == 0 {
                             continue;
                         }
+                        /*
+                        010
+                        010
+                        010
+                         */
+                        let mut target_width = width + w;
+                        let mut target_height = height + h;
+                        //eprintln!("vor: width: {}+{}={}\nheight: {}+{}={}", width, w, target_width, height, h, target_height);
 
-                        let target_width = width + w; // Diese Zeile muss noch angepassst werden
-                        let target_height = height + h; // Diese Zeile muss noch angepassst werden
+                        if target_height < 0 {
+                            target_height = (self.height as i64) - 1;
+                        }
+                        if target_height as u32 >= self.height {
+                            target_height = 0;
+                        }
 
+                        if target_width < 0 {
+                            //eprint!("slef.width: {}", self.width);
+                            target_width = (self.width as i64) - 1;
+                        }
+                        if target_width as u32 >= self.width {
+                            target_width = 0;
+                        }
+                       //epinntln!(
+                       //     "width: {}+{}={}\nheight: {}+{}={}",
+                       //     width, w, target_width, height, h, target_height
+                       // );
                         if self.get_cell(target_width as u32, target_height as u32)
                             == CellState::Alive
                         {
                             count += 1;
+                           //epinntln!("ALIVE Neightbour\n")
                         }
                     }
                 }
-
-                println!("Oh nooo");
-                unimplemented!()
             }
             EdgeBehavior::DeadCells => {
                 /* 
@@ -98,6 +126,7 @@ impl GoLField {
         for h in 0..self.height {
             for w in 0..self.width {
                 let al_neigthbours = self.get_alive_neightbour_count(w, h, &eb);
+               //epinntln!("w: {}, h:{}, aln: {}\n", w, h, al_neigthbours);
                 match al_neigthbours {
                     0...1 => {
                         //Zelle wird nicht belebt
@@ -132,7 +161,7 @@ impl GoLField {
     /// creates a new gameboard with the given width and height
     pub fn new(width: u32, height: u32) -> GoLField {
         let needed_bytes = (width as u64 * height as u64) as f64 / 8_f64;
-        eprintln!("bytes needed = {}", needed_bytes);
+       //epinntln!("bytes needed = {}", needed_bytes);
         let needed_bytes = needed_bytes.ceil();
         let field = vec![0_u8; needed_bytes as usize];
 
@@ -183,7 +212,7 @@ mod tests {
         )
     }
     #[test]
-    fn iter_simple() {
+    fn iter_simple_deadcell() {
         let mut field = super::GoLField::new(3, 3);
         field.set_cell_alive(1, 1);
         assert_eq!(field.field_data, &[8_u8, 0_u8]);
@@ -192,7 +221,7 @@ mod tests {
     }
 
     #[test]
-    fn iter_simple_static_block() {
+    fn iter_simple_static_block_deadcell() {
         let mut field = super::GoLField::new(3, 3);
         field.set_cell_alive(0, 0);
         field.set_cell_alive(0, 1);
@@ -204,7 +233,7 @@ mod tests {
     }
 
     #[test]
-    fn iter_blink() {
+    fn iter_blink_deadcell() {
         let mut field = super::GoLField::new(3, 3);
         field.set_cell_alive(1, 0); //010
         field.set_cell_alive(1, 1); //010
@@ -219,6 +248,62 @@ mod tests {
         0001_1100_0000_0000
          */
         assert_eq!(new_field.field_data, &[28_u8, 0_u8]);
+    }
+
+    #[test]
+    fn corpus_static_block_over_edge() {
+        let mut field = super::GoLField::new(3, 3);
+        field.set_cell_alive(0, 0);
+        field.set_cell_alive(2, 0);
+        field.set_cell_alive(0, 2);
+        field.set_cell_alive(2, 2);
+        /*
+        101
+        000
+        101
+        1010_0010_1000_0000
+        */
+
+        assert_eq!(field.field_data, &[0xA2, 0x80]);
+
+        let new_field = field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        assert_eq!(new_field.field_data, &[0xA2, 0x80]);
+    }
+
+    #[test]
+    fn iter_simple_corpus() {
+        let mut field = super::GoLField::new(3, 3);
+        field.set_cell_alive(1, 1);
+        assert_eq!(field.field_data, &[8_u8, 0_u8]);
+        let new_field = field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        assert_eq!(new_field.field_data, &[0_u8, 0_u8]);
+    }
+
+    #[test]
+    fn iter_simple_static_block_corpus() {
+        let mut field = super::GoLField::new(3, 3);
+        field.set_cell_alive(0, 0);
+        field.set_cell_alive(0, 1);
+        field.set_cell_alive(1, 1);
+        field.set_cell_alive(1, 0);
+        assert_eq!(field.field_data, &[216_u8, 0_u8]);
+        let new_field = field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        assert_eq!(new_field.field_data, &[216_u8, 0_u8]);
+    }
+
+    #[test]
+    fn iter_blink_corpus() {
+        let mut field = super::GoLField::new(4, 4);
+        field.set_cell_alive(1, 0);
+        field.set_cell_alive(1, 1);
+        field.set_cell_alive(1, 3);
+        assert_eq!(field.field_data, &[68_u8, 4_u8]); //0100_1001_0000_0000
+
+        let new_field = field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        assert_eq!(new_field.field_data, &[224_u8, 0_u8]);
+
+        let new_field = new_field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        assert_eq!(new_field.field_data, &[68_u8, 4_u8]); //0100_1001_0000_0000
     }
 
 }
