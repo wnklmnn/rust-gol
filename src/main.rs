@@ -7,7 +7,7 @@ fn main() {
     for _ in 0..10 {
         let start = std::time::Instant::now();
         for _ in 0..1 {
-            let _ = field.calc_next_iteration(rust_gol::EdgeBehavior::DeadCells);
+            let _ = field.calc_next_iteration(&rust_gol::EdgeBehavior::DeadCells);
         }
         println!(
             "Time = {:#?}",

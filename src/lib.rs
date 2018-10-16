@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![warn(clippy)]
 //! This crate will provide fundemantal functions to implement a basic game of life
 #[derive(Debug, PartialEq, Eq)]
 /// This stucture will hold a basic gamestate
@@ -64,7 +65,7 @@ impl GoLField {
                         //eprintln!("vor: width: {}+{}={}\nheight: {}+{}={}", width, w, target_width, height, h, target_height);
 
                         if target_height < 0 {
-                            target_height = (self.height as i64) - 1;
+                            target_height = i64::from(self.height) - 1;
                         }
                         if target_height as u32 >= self.height {
                             target_height = 0;
@@ -72,20 +73,20 @@ impl GoLField {
 
                         if target_width < 0 {
                             //eprint!("slef.width: {}", self.width);
-                            target_width = (self.width as i64) - 1;
+                            target_width = (i64::from(self.width)) - 1;
                         }
                         if target_width as u32 >= self.width {
                             target_width = 0;
                         }
-                       //epinntln!(
-                       //     "width: {}+{}={}\nheight: {}+{}={}",
-                       //     width, w, target_width, height, h, target_height
-                       // );
+                        //epinntln!(
+                        //     "width: {}+{}={}\nheight: {}+{}={}",
+                        //     width, w, target_width, height, h, target_height
+                        // );
                         if self.get_cell(target_width as u32, target_height as u32)
                             == CellState::Alive
                         {
                             count += 1;
-                           //epinntln!("ALIVE Neightbour\n")
+                            //epinntln!("ALIVE Neightbour\n")
                         }
                     }
                 }
@@ -121,12 +122,12 @@ impl GoLField {
         count
     }
     /// calculates and returns the next iteration of the board
-    pub fn calc_next_iteration(&self, eb: EdgeBehavior) -> GoLField {
+    pub fn calc_next_iteration(&self, eb: &EdgeBehavior) -> GoLField {
         let mut ret = GoLField::new(self.width, self.height);
         for h in 0..self.height {
             for w in 0..self.width {
                 let al_neigthbours = self.get_alive_neightbour_count(w, h, &eb);
-               //epinntln!("w: {}, h:{}, aln: {}\n", w, h, al_neigthbours);
+                //epinntln!("w: {}, h:{}, aln: {}\n", w, h, al_neigthbours);
                 match al_neigthbours {
                     0...1 => {
                         //Zelle wird nicht belebt
@@ -151,7 +152,7 @@ impl GoLField {
 
     fn get_relbyte_and_bits_to_shift(&self, width: u32, height: u32) -> (usize, u8) {
         assert!(width < self.width);
-        let bit: u64 = (self.width as u64 * height as u64) + width as u64;
+        let bit: u64 = (u64::from(self.width) * u64::from(height)) + u64::from(width);
         let byte_no = (bit as f64 / 8_f64) as usize;
         assert!(byte_no < self.field_data.len());
         let bit_to_shift: u8 = 7 - (bit % 8) as u8;
@@ -160,8 +161,8 @@ impl GoLField {
     }
     /// creates a new gameboard with the given width and height
     pub fn new(width: u32, height: u32) -> GoLField {
-        let needed_bytes = (width as u64 * height as u64) as f64 / 8_f64;
-       //epinntln!("bytes needed = {}", needed_bytes);
+        let needed_bytes = (u64::from(width) * u64::from(height)) as f64 / 8_f64;
+        //epinntln!("bytes needed = {}", needed_bytes);
         let needed_bytes = needed_bytes.ceil();
         let field = vec![0_u8; needed_bytes as usize];
 
@@ -177,9 +178,10 @@ impl GoLField {
         let bit_stuff = self.get_relbyte_and_bits_to_shift(width, height);
         let relevant_byte = self.field_data[bit_stuff.0];
 
-        match relevant_byte & (0x01 << bit_stuff.1) != 0x00 {
-            true => CellState::Alive,
-            false => CellState::Dead,
+        if relevant_byte & (0x01 << bit_stuff.1) != 0x00 {
+            CellState::Alive
+        } else {
+            CellState::Dead
         }
     }
 
@@ -216,7 +218,7 @@ mod tests {
         let mut field = super::GoLField::new(3, 3);
         field.set_cell_alive(1, 1);
         assert_eq!(field.field_data, &[8_u8, 0_u8]);
-        let new_field = field.calc_next_iteration(super::EdgeBehavior::DeadCells);
+        let new_field = field.calc_next_iteration(&super::EdgeBehavior::DeadCells);
         assert_eq!(new_field.field_data, &[0_u8, 0_u8]);
     }
 
@@ -228,7 +230,7 @@ mod tests {
         field.set_cell_alive(1, 1);
         field.set_cell_alive(1, 0);
         assert_eq!(field.field_data, &[216_u8, 0_u8]);
-        let new_field = field.calc_next_iteration(super::EdgeBehavior::DeadCells);
+        let new_field = field.calc_next_iteration(&super::EdgeBehavior::DeadCells);
         assert_eq!(new_field.field_data, &[216_u8, 0_u8]);
     }
 
@@ -239,7 +241,7 @@ mod tests {
         field.set_cell_alive(1, 1); //010
         field.set_cell_alive(1, 2); //010
         assert_eq!(field.field_data, &[73_u8, 0_u8]); //0100_1001_0000_0000
-        let new_field = field.calc_next_iteration(super::EdgeBehavior::DeadCells);
+        let new_field = field.calc_next_iteration(&super::EdgeBehavior::DeadCells);
         /*
         000
         111
@@ -266,7 +268,7 @@ mod tests {
 
         assert_eq!(field.field_data, &[0xA2, 0x80]);
 
-        let new_field = field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        let new_field = field.calc_next_iteration(&super::EdgeBehavior::Wrapping);
         assert_eq!(new_field.field_data, &[0xA2, 0x80]);
     }
 
@@ -275,7 +277,7 @@ mod tests {
         let mut field = super::GoLField::new(3, 3);
         field.set_cell_alive(1, 1);
         assert_eq!(field.field_data, &[8_u8, 0_u8]);
-        let new_field = field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        let new_field = field.calc_next_iteration(&super::EdgeBehavior::Wrapping);
         assert_eq!(new_field.field_data, &[0_u8, 0_u8]);
     }
 
@@ -287,7 +289,7 @@ mod tests {
         field.set_cell_alive(1, 1);
         field.set_cell_alive(1, 0);
         assert_eq!(field.field_data, &[216_u8, 0_u8]);
-        let new_field = field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        let new_field = field.calc_next_iteration(&super::EdgeBehavior::Wrapping);
         assert_eq!(new_field.field_data, &[216_u8, 0_u8]);
     }
 
@@ -299,10 +301,10 @@ mod tests {
         field.set_cell_alive(1, 3);
         assert_eq!(field.field_data, &[68_u8, 4_u8]); //0100_1001_0000_0000
 
-        let new_field = field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        let new_field = field.calc_next_iteration(&super::EdgeBehavior::Wrapping);
         assert_eq!(new_field.field_data, &[224_u8, 0_u8]);
 
-        let new_field = new_field.calc_next_iteration(super::EdgeBehavior::Wrapping);
+        let new_field = new_field.calc_next_iteration(&super::EdgeBehavior::Wrapping);
         assert_eq!(new_field.field_data, &[68_u8, 4_u8]); //0100_1001_0000_0000
     }
 
