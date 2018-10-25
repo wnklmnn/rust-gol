@@ -1,0 +1,11 @@
+[package]
+name = "gol_piston"
+version = "0.1.0"
+authors = ["Pascal Winkelmann <pascal@wnklmnn.de>"]
+
+[dependencies]
+piston_window = "0.81.0"
+image = "0.20.0"
+piston2d-graphics = "0.26.0"
+rust_gol = { path = "../lib" }
+rand = "0.5.5"
