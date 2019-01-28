@@ -2,6 +2,7 @@
 name = "gol_piston"
 version = "0.1.0"
 authors = ["Pascal Winkelmann <pascal@wnklmnn.de>"]
+edition = "2018"
 
 [dependencies]
 piston_window = "0.81.0"

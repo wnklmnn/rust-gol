@@ -2,5 +2,7 @@
 name = "rust_gol"
 version = "0.1.0"
 authors = ["Pascal Winkelmann <pascal@wnklmnn.de>"]
+edition = "2018"
+
 
 [dependencies]
