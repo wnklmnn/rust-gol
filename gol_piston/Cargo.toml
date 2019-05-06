@@ -5,8 +5,8 @@ authors = ["Pascal Winkelmann <pascal@wnklmnn.de>"]
 edition = "2018"
 
 [dependencies]
-piston_window = "0.81.0"
-image = "0.20.0"
-piston2d-graphics = "0.26.0"
+piston_window = "0.89.0"
+image = "0.21.1"
+piston2d-graphics = "0.30.0"
 rust_gol = { path = "../lib" }
-rand = "0.5.5"
+rand = "0.6.5"

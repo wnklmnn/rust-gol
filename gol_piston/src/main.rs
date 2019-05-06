@@ -17,8 +17,8 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let win_set = piston_window::WindowSettings::new(
         "mein Fenster",
         Size {
-            width: WIDTH,
-            height: HEIGHT,
+            width: f64::from(WIDTH),
+            height: f64::from(HEIGHT),
         },
     );
     let mut field = rust_gol::GoLField::new(WIDTH, HEIGHT);
