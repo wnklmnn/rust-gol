@@ -13,7 +13,7 @@ use rand::random;
 const HEIGHT: u32 = 500;
 const WIDTH: u32 = 500;
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let win_set = piston_window::WindowSettings::new(
         "mein Fenster",
         Size {

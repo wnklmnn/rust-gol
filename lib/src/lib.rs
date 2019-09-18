@@ -129,7 +129,7 @@ impl GoLField {
                 let al_neigthbours = self.get_alive_neightbour_count(w, h, &eb);
                 //epinntln!("w: {}, h:{}, aln: {}\n", w, h, al_neigthbours);
                 match al_neigthbours {
-                    0...1 => {
+                    0..=1 => {
                         //Zelle wird nicht belebt
                     }
                     2 => {
@@ -140,7 +140,7 @@ impl GoLField {
                     3 => {
                         ret.set_cell_alive(w, h);
                     }
-                    4...8 => {
+                    4..=8 => {
                         //Zelle wird nicht belebt
                     }
                     _ => unreachable!(),
